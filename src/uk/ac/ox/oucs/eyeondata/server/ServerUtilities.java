@@ -5,13 +5,18 @@ package uk.ac.ox.oucs.eyeondata.server;
 
 import java.util.UUID;
 
+import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
+
 /**
  * @author Ken Kahn
  *
  */
+
 public class ServerUtilities {
     
-final static String codesForUUID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
+    static private DAO dao = new DAO();
+    
+    final static String codesForUUID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
        
     public static String encodeUUID(UUID uuid) {
 	StringBuilder encoding = new StringBuilder();
@@ -30,6 +35,14 @@ final static String codesForUUID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR
     
     public static String generateGUIDString() {
 	return encodeUUID(UUID.randomUUID());
+    }
+    
+    public static void persistObject(Object object) {
+	getDao().persistObject(object);	
+    }
+    
+    public static DAO getDao() {
+        return dao;
     }
 
 }
