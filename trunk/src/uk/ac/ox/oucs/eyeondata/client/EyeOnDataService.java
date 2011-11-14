@@ -6,7 +6,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 /**
  * The client side stub for the RPC service.
  */
-@RemoteServiceRelativePath("greet")
+@RemoteServiceRelativePath("EyeOnData")
 public interface EyeOnDataService extends RemoteService {
     String[] saveWebPage(String html, String pageId);
 }

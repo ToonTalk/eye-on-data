@@ -92,7 +92,7 @@ public class EyeOnData implements EntryPoint {
     }
     
     private void addTryItNowLink() {
-	String url = GWT.getModuleBaseURL() + "v/" + readOnlyPageId + ".html";
+	String url = GWT.getHostPageBaseURL() + "v/" + readOnlyPageId + ".html";
 	String newHTML = strings.tryItNow().replace("***URL***", url);
 	tryItNowHTML.setHTML(newHTML);
     }
