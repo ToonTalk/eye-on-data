@@ -2,6 +2,7 @@ package uk.ac.ox.oucs.eyeondata.server;
 
 import uk.ac.ox.oucs.eyeondata.client.EyeOnDataService;
 import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
+import uk.ac.ox.oucs.eyeondata.server.objectify.ReadOnlyPageId;
 import uk.ac.ox.oucs.eyeondata.server.objectify.WebPage;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -13,8 +14,11 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	EyeOnDataService {
 
-    public String[] saveWebPage(String html, String pageId) throws IllegalArgumentException {
-	String[] result = new String[2];
+    public String[] saveWebPage(String html, String pageId) {
+	String[] result = new String[3];
+	// result[0] = read-write pageId
+	// result[1] = read-only pageId if new (otherwise null)
+	// result[2] = errors/warnings
 	if (pageId == null) {
 	    pageId = ServerUtilities.generateGUIDString();
 	}
@@ -24,6 +28,10 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	WebPage webPage = dao.getWebPage(pageId);
 	if (webPage == null) {
 	    webPage = new WebPage(pageId, safeHTML);
+	    String readOnlyPageId = ServerUtilities.generateGUIDString();
+	    ReadOnlyPageId readOnlyPageIdEntry = new ReadOnlyPageId(readOnlyPageId, pageId);
+	    ServerUtilities.persistObject(readOnlyPageIdEntry);
+	    result[1] = readOnlyPageId;
 	} else {
 	    webPage.setHtml(safeHTML);
 	}

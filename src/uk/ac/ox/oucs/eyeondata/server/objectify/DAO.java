@@ -8,6 +8,7 @@ public class DAO extends DAOBase {
 
     static {
         ObjectifyService.register(WebPage.class);
+        ObjectifyService.register(ReadOnlyPageId.class);
     }
 
     public void persistObject(Object object) {
@@ -17,6 +18,16 @@ public class DAO extends DAOBase {
     public WebPage getWebPage(String pageId) {
 	Objectify ofy = ofy();
 	return ofy.find(WebPage.class, pageId);
+    }
+    
+    public String getPageId(String readOnlyPageId) {
+	Objectify ofy = ofy();
+	ReadOnlyPageId readOnlyPageIdEntry = ofy.find(ReadOnlyPageId.class, readOnlyPageId);
+	if (readOnlyPageIdEntry == null) {
+	    return null;
+	} else {
+	    return readOnlyPageIdEntry.getPageId();
+	}
     }
 
 }

@@ -20,7 +20,11 @@ public class EyeOnData implements EntryPoint {
     
     private String pageId = null;
     
+    private String readOnlyPageId = null;
+    
     private String previousEditorContents = null;
+    
+    private HTML tryItNowHTML = new HTML();
     
     private int editorHeight = 300;
 
@@ -45,6 +49,7 @@ public class EyeOnData implements EntryPoint {
 
 	    @Override
 	    public void onClick(ClickEvent event) {
+		tryItNowHTML.setHTML(strings.pleaseWait());
 		AsyncCallback<String[]> callback = new AsyncCallback<String[]>() {
 
 		    @Override
@@ -54,10 +59,14 @@ public class EyeOnData implements EntryPoint {
 
 		    @Override
 		    public void onSuccess(String[] result) {
-			if (result[1] != null) {
+			if (result[2] != null) {
 			    Utilities.popupMessage(result[1]);
 			}
-			pageId = result[0];			
+			pageId = result[0];
+			if (result[1] != null) {
+			    readOnlyPageId = result[1];
+			}
+			addTryItNowLink();
 		    }
 		    
 		};
@@ -72,7 +81,6 @@ public class EyeOnData implements EntryPoint {
 	    @Override
 	    public void onClick(ClickEvent event) {
 		richTextEntry.setHTML(previousEditorContents);
-		
 	    }
 	    
 	};
@@ -80,49 +88,13 @@ public class EyeOnData implements EntryPoint {
 	contents.add(richTextEntry);
 	HTML helpMessage = new HTML(strings.helpMessage());
 	contents.add(helpMessage);
-
-//
-//	    /**
-//	     * Send the name from the nameField to the server and wait for a response.
-//	     */
-//	    private void sendNameToServer() {
-//		// First, we validate the input.
-//		errorLabel.setText("");
-//		String textToServer = nameField.getText();
-//		if (!FieldVerifier.isValidName(textToServer)) {
-//		    errorLabel.setText("Please enter at least four characters");
-//		    return;
-//		}
-//
-//		// Then, we send the input to the server.
-//		sendButton.setEnabled(false);
-//		textToServerLabel.setText(textToServer);
-//		serverResponseLabel.setText("");
-//		eyeOnDataService.saveWebPage(textToServer, null,
-//			new AsyncCallback<String>() {
-//			    public void onFailure(Throwable caught) {
-//				// Show the RPC error message to the user
-//				dialogBox
-//					.setText("Remote Procedure Call - Failure");
-//				serverResponseLabel
-//					.addStyleName("serverResponseLabelError");
-//				serverResponseLabel.setHTML(SERVER_ERROR);
-//				dialogBox.center();
-//				closeButton.setFocus(true);
-//			    }
-//
-//			    public void onSuccess(String result) {
-//				dialogBox.setText("Remote Procedure Call");
-//				serverResponseLabel
-//					.removeStyleName("serverResponseLabelError");
-//				serverResponseLabel.setHTML(result);
-//				dialogBox.center();
-//				closeButton.setFocus(true);
-//			    }
-//			});
-//	    }
-//	}
-//
+	contents.add(tryItNowHTML);
+    }
+    
+    private void addTryItNowLink() {
+	String url = GWT.getModuleBaseURL() + "v/" + readOnlyPageId + ".html";
+	String newHTML = strings.tryItNow().replace("***URL***", url);
+	tryItNowHTML.setHTML(newHTML);
     }
 
     public static EyeOnData instance() {

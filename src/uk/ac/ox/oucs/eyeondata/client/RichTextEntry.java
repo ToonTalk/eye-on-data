@@ -14,8 +14,8 @@ import com.google.gwt.user.client.ui.Composite;
 public class RichTextEntry extends Composite {
     private RichTextArea richTextArea = new RichTextArea();
     private RichTextToolbar toolBar = new RichTextToolbar(richTextArea);
-    private Button saveButton = new EyeOnDataButton(EyeOnData.strings.save());
-    private Button cancelButton = new EyeOnDataButton(EyeOnData.strings.cancel());
+    private Button saveButton = new EyeOnDataButton(EyeOnData.strings.saveButtonLabel());
+    private Button cancelButton = new EyeOnDataButton(EyeOnData.strings.cancelButtonLabel());
     
     public RichTextEntry() {
 	this(null);
