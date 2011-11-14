@@ -89,5 +89,7 @@ public interface EyeOnDataConstants extends Constants {
 
     String defaultEditorContents();
 
+    String serverErrorMessage();
+
 
 }

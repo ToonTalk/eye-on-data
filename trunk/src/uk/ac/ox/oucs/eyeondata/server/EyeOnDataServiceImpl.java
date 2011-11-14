@@ -1,6 +1,7 @@
 package uk.ac.ox.oucs.eyeondata.server;
 
 import uk.ac.ox.oucs.eyeondata.client.EyeOnDataService;
+
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
@@ -10,9 +11,13 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	EyeOnDataService {
 
-    public String saveWebPage(String html, String pageId) throws IllegalArgumentException {
-	// TODO:
-	return null;
+    public String[] saveWebPage(String html, String pageId) throws IllegalArgumentException {
+	String[] result = new String[2];
+	if (pageId == null) {
+	    pageId = ServerUtilities.generateGUIDString();
+	}
+	result[0] = pageId;
+	return result;
     }
 
     /**
