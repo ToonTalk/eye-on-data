@@ -23,17 +23,18 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	    pageId = ServerUtilities.generateGUIDString();
 	}
 	result[0] = pageId;
-	String safeHTML = escapeHTML(html);
+	// not sure how this helps in this context
+//	String safeHTML = escapeHTML(html);
 	DAO dao = ServerUtilities.getDao();
 	WebPage webPage = dao.getWebPage(pageId);
 	if (webPage == null) {
-	    webPage = new WebPage(pageId, safeHTML);
+	    webPage = new WebPage(pageId, html);
 	    String readOnlyPageId = ServerUtilities.generateGUIDString();
 	    ReadOnlyPageId readOnlyPageIdEntry = new ReadOnlyPageId(readOnlyPageId, pageId);
 	    ServerUtilities.persistObject(readOnlyPageIdEntry);
 	    result[1] = readOnlyPageId;
 	} else {
-	    webPage.setHtml(safeHTML);
+	    webPage.setHtml(html);
 	}
 	ServerUtilities.persistObject(webPage);
 	return result;
@@ -46,10 +47,11 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
      * @param html the html string to escape
      * @return the escaped string
      */
-    private String escapeHTML(String html) {
-	if (html == null) {
-	    return null;
-	}
-	return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-    }
+//    private String escapeHTML(String html) {
+//	if (html == null) {
+//	    return null;
+//	}
+//	return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+//    }
+    
 }

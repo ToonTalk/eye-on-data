@@ -7,18 +7,27 @@
 
   <!-- Servlets -->
   <servlet>
-    <servlet-name>greetServlet</servlet-name>
+    <servlet-name>EyeOnDataService</servlet-name>
     <servlet-class>uk.ac.ox.oucs.eyeondata.server.EyeOnDataServiceImpl</servlet-class>
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/eyeondata/greet</url-pattern>
+    <servlet-name>EyeOnDataService</servlet-name>
+    <url-pattern>/eyeondata/EyeOnData</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+	<servlet-name>WebPageServlet</servlet-name>
+	<servlet-class>uk.ac.ox.oucs.eyeondata.server.WebPageServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+	<servlet-name>WebPageServlet</servlet-name>
+	<url-pattern>/v/*</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Eyeondata.html</welcome-file>
+    <welcome-file>index.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
