@@ -8,5 +8,5 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("greet")
 public interface EyeOnDataService extends RemoteService {
-    String[] saveWebPage(String html, String pageId) throws IllegalArgumentException;
+    String[] saveWebPage(String html, String pageId);
 }

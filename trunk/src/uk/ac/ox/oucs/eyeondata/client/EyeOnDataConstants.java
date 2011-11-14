@@ -83,13 +83,17 @@ public interface EyeOnDataConstants extends Constants {
     
     String helpMessage();
 
-    String save();
+    String saveButtonLabel();
     
-    String cancel();
+    String cancelButtonLabel();
 
     String defaultEditorContents();
+    
+    String pleaseWait();
 
     String serverErrorMessage();
+
+    String tryItNow();
 
 
 }
