@@ -6,18 +6,16 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.Composite;
 
 public class RichTextEntry extends Composite {
     private RichTextArea richTextArea = new RichTextArea();
     private RichTextToolbar toolBar = new RichTextToolbar(richTextArea);
-    private Button saveButton = new Button(EyeOnData.strings.save());
-    private Button cancelButton = new Button(EyeOnData.strings.cancel());
+    private Button saveButton = new EyeOnDataButton(EyeOnData.strings.save());
+    private Button cancelButton = new EyeOnDataButton(EyeOnData.strings.cancel());
     
     public RichTextEntry() {
 	this(null);
@@ -51,7 +49,7 @@ public class RichTextEntry extends Composite {
 	int windowWidth = Window.getClientWidth();
 	int richTextWidth = windowWidth;
 	richTextArea.setWidth(richTextWidth-30 + "px");
-	int richTextHeight = EyeOnData.editorHeight;
+	int richTextHeight = EyeOnData.instance().getEditorHeight();
 	richTextArea.setHeight(richTextHeight + "px");
 	KeyPressHandler keyPressHandler = new KeyPressHandler() {
 
@@ -67,7 +65,7 @@ public class RichTextEntry extends Composite {
 	    }
 	    
 	};
-	richTextArea.addKeyPressHandler(keyPressHandler );
+	richTextArea.addKeyPressHandler(keyPressHandler);
     }
     
     public void addSaveButtonClickHandler(ClickHandler addHandler) {
@@ -80,6 +78,14 @@ public class RichTextEntry extends Composite {
 
     public RichTextArea getRichTextArea() {
         return richTextArea;
+    }
+    
+    public String getHTML() {
+	return richTextArea.getHTML();
+    }
+    
+    public void setHTML(String html) {
+	richTextArea.setHTML(html);
     }
 
 };
