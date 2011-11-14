@@ -310,7 +310,7 @@ public class WebPageServlet extends HttpServlet {
 	String result[] = new String[2];
 	String[] parts;
 	Relation relation;
-	parts = condition.split(">=", 2);
+	parts = condition.split("&gt;=", 2);
 	if (parts.length == 2) {
 	    relation = Relation.GREATER_THAN_OR_EQUAL;
 	} else {
@@ -318,7 +318,7 @@ public class WebPageServlet extends HttpServlet {
 	    if (parts.length == 2) {
 		relation = Relation.GREATER_THAN;
 	    } else {
-		parts = condition.split("<=", 2);
+		parts = condition.split("&lt;=", 2);
 		if (parts.length == 2) {
 		    relation = Relation.LESS_THAN_OR_EQUAL;
 		} else {
