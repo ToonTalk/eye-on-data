@@ -40,6 +40,21 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	return result;
     }
 
+    @Override
+    public String[] fetchPreviousPageContents(String pageId) {
+	String[] result = new String[2];
+	// result[0] = page contents
+	// result[1] = errors/warnings
+	DAO dao = ServerUtilities.getDao();
+	WebPage webPage = dao.getWebPage(pageId);
+	if (webPage == null) {
+	    result[1] = "Unable to find the previous contents of a page with id: " + pageId;
+	} else {
+	    result[0] = webPage.getHtml();
+	}
+	return result;
+    }
+
     /**
      * Escape an html string. Escaping data received from the client helps to
      * prevent cross-site script vulnerabilities.

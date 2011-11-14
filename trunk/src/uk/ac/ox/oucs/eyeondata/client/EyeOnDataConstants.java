@@ -95,5 +95,9 @@ public interface EyeOnDataConstants extends Constants {
 
     String tryItNow();
 
+    String editAnotherTime();
+
+    String fetchingPagePleaseWait();
+
 
 }
