@@ -73,6 +73,9 @@ public class WebPageServlet extends HttpServlet {
 		    result[0] += processedInstruction[0];
 		}
 		if (processedInstruction[1] != null) {
+		    if (result[1] == null) {
+			result[1] = "";
+		    }
 		    result[1] += " " + processedInstruction[1];
 		}
 	    } else {
@@ -86,12 +89,70 @@ public class WebPageServlet extends HttpServlet {
 	// result[0] is part of the HTML (or null)
 	// result[1] is an error or warnings
 	String result[] = new String[2];
+	String imageHTML = null;
+	int imageIndex = instruction.indexOf("<img src=");
+	if (imageIndex >= 0) {
+	    int closeImageIndex = instruction.indexOf(">", imageIndex);
+	    if (closeImageIndex > 0) {
+		imageHTML = instruction.substring(0, closeImageIndex+1);
+		if (imageHTML != null) {
+		    String remainingInstructions = instruction.substring(closeImageIndex+1);
+		    String[] equationParts = remainingInstructions.split("=");
+		    if (equationParts.length > 1) {
+			// alternates between name value-and-next-name
+			String variableName = null;
+			for (int i = 0; i < equationParts.length; i++) {
+			    String part = equationParts[i].trim();
+			    if (i == 0) {
+				variableName = part;
+			    } else {
+				int lastSpaceIndex = part.lastIndexOf(' ');
+				if (lastSpaceIndex >= 0) {
+				    bindings.put(variableName, part.substring(0, lastSpaceIndex));
+				    variableName = part.substring(lastSpaceIndex+1);
+				} else {
+				    String[] value = evaluate(part, bindings);
+				    if (value[0] != null) {
+					bindings.put(variableName, value[0]);
+				    }
+				    if (value[1] != null) {
+					if (result[1] == null) {
+					    result[1] = "";
+					}
+					result[1] += value[1];
+				    }
+				}
+			    }
+			}
+		    }
+		    String width = bindings.get("width");
+		    String height = bindings.get("height");
+		    if (width != null) {
+			imageHTML = addAttribute(imageHTML, "width", width);
+		    }
+		    if (height != null) {
+			imageHTML = addAttribute(imageHTML, "height", height);
+		    }
+		    result[0] = imageHTML;
+		    return result;
+		}
+	    }
+	}
 	int equalIndex = instruction.indexOf('=');
 	if (equalIndex >= 0) {
 	    result[1] = processEquation(instruction.substring(0, equalIndex), instruction.substring(equalIndex+1), bindings, request);
 	    return result;
 	}
 	return evaluate(instruction.trim(), bindings);
+    }
+
+    private String addAttribute(String html, String attribute, String value) {
+	int attributeIndex = html.indexOf(attribute + "=");
+	if (attributeIndex < 0) {
+	    return html.substring(0, html.length()-1) + " " + attribute + "=" + value + ">";
+	} else {
+	    return html.substring(0, attributeIndex) + value + ">";
+	}
     }
 
     private String[] evaluate(String expression, HashMap<String, String> bindings) {
