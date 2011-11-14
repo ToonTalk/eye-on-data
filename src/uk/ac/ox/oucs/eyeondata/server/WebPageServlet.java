@@ -91,43 +91,117 @@ public class WebPageServlet extends HttpServlet {
 	    result[1] = processEquation(instruction.substring(0, equalIndex), instruction.substring(equalIndex+1), bindings, request);
 	    return result;
 	}
-	return evaluate(instruction, bindings);
+	return evaluate(instruction.trim(), bindings);
     }
 
     private String[] evaluate(String expression, HashMap<String, String> bindings) {
 	String result[] = new String[2];
-	String[] parts = expression.split("/");
-	if (parts.length > 1) {
-	    String[] numbers = evaluateAllToNumbers(parts, bindings, result);
-	    // TODO: divide them (and deal with errors)
-	}
-	parts = expression.split("\\*");
-	if (parts.length > 1) {
-	    String[] numbers = evaluateAllToNumbers(parts, bindings, result);
-	    // TODO: multiply them (and deal with errors)
-	}
+	String[] parts;
+	Double[] numbers;
 	parts = expression.split("\\+");
 	if (parts.length > 1) {
-	    String[] numbers = evaluateAllToNumbers(parts, bindings, result);
-	    // TODO: add them (and deal with errors)
+	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    if (numbers[0] != null) {
+		Double sum = numbers[0];
+		for (int i = 1; i < numbers.length; i++) {
+		    if (numbers[i] != null) {
+			sum += numbers[i];
+		    }			
+		}
+		result[0] = Double.toString(sum);
+	    }
+	    return result;
 	}
 	parts = expression.split("\\-");
 	if (parts.length > 1) {
-	    String[] numbers = evaluateAllToNumbers(parts, bindings, result);
-	    // TODO: subtract them (and deal with errors)
+	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    if (numbers[0] != null) {
+		Double difference = numbers[0];
+		for (int i = 1; i < numbers.length; i++) {
+		    if (numbers[i] != null) {
+			difference -= numbers[i];
+		    }			
+		}
+		result[0] = Double.toString(difference);
+	    }
+	    return result;
 	}
-	String value = bindings.get(expression.trim());
+	parts = expression.split("\\*");
+	if (parts.length > 1) {
+	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    if (numbers[0] != null) {
+		Double product = numbers[0];
+		for (int i = 1; i < numbers.length; i++) {
+		    if (numbers[i] != null) {
+			product *= numbers[i];
+		    }			
+		}
+		result[0] = Double.toString(product);
+	    }
+	    return result;
+	}
+	parts = expression.split("/");
+	if (parts.length > 1) {
+	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    if (numbers[0] != null) {
+		Double dividend = numbers[0];
+		for (int i = 1; i < numbers.length; i++) {
+		    if (numbers[i] != null) {
+			if (numbers[i] != 0.0) {
+			    dividend /= numbers[i];
+			} else {
+			    if (result[1] == null) {
+				result[1] = "";
+			    }
+			    result[0] += "Unable to divide by zero in " + expression;
+			}
+		    }			
+		}
+		result[0] = Double.toString(dividend);
+	    }
+	    return result;
+	}
+	String value = bindings.get(expression);
 	if (value != null) {
 	    result[0] = value;
 	} else {
-	    result[1] += " No value was found for this: " + expression.trim();
+	    // can be either a double or long
+	    try {
+		Double.parseDouble(expression);
+		result[0] = expression;
+	    } catch (NumberFormatException e) {
+		if (result[1] == null) {
+		    result[1] = "";
+		}
+		result[1] += " The following is neither a number nor the value of a variable: " + expression;
+	    }
 	}
 	return result;
     }
 
-    private String[] evaluateAllToNumbers(String[] parts, HashMap<String, String> bindings, String[] result) {
-	// TODO Auto-generated method stub
-	return null;
+    private Double[] evaluateAllToNumbers(String[] parts, HashMap<String, String> bindings, String[] result) {
+	Double[] numbers = new Double[parts.length];
+	for (int i = 0; i < parts.length; i++) {
+	    String[] evaluation = evaluate(parts[i], bindings);
+	    if (evaluation[0] != null) {
+		try {
+		    numbers[i] = Double.parseDouble(evaluation[0]);
+		} catch (NumberFormatException e) {
+		    if (result[1] == null) {
+			result[1] = "";
+		    }
+		    result[1] += " The following is not a number: " + evaluation[0] + " while computing " + parts[i];
+		    // null value is left in numbers[i]
+		}
+	    } 
+	    if (evaluation[1] != null) {
+		if (result[1] == null) {
+		    result[1] = "";
+		}
+		result[1] += evaluation[1];
+	    }
+	}
+	return numbers;
     }
 
     private String processEquation(String left, String right, HashMap<String, String> bindings, HttpServletRequest request) {
