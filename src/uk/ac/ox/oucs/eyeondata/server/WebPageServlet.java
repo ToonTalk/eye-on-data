@@ -107,20 +107,23 @@ public class WebPageServlet extends HttpServlet {
 				variableName = part;
 			    } else {
 				int lastSpaceIndex = part.lastIndexOf(' ');
-				if (lastSpaceIndex >= 0) {
-				    bindings.put(variableName, part.substring(0, lastSpaceIndex));
+				String[] value;
+				if (lastSpaceIndex >= 0 && i+1 < equationParts.length) {
+				    // space in the last one doesn't matter
+				    String valueExpression = part.substring(0, lastSpaceIndex);
+				    value = evaluate(valueExpression, bindings);
 				    variableName = part.substring(lastSpaceIndex+1);
 				} else {
-				    String[] value = evaluate(part, bindings);
-				    if (value[0] != null) {
-					bindings.put(variableName, value[0]);
+				    value = evaluate(part, bindings);  
+				}
+				if (value[0] != null) {
+				    bindings.put(variableName, value[0]);
+				}
+				if (value[1] != null) {
+				    if (result[1] == null) {
+					result[1] = "";
 				    }
-				    if (value[1] != null) {
-					if (result[1] == null) {
-					    result[1] = "";
-					}
-					result[1] += value[1];
-				    }
+				    result[1] += value[1];
 				}
 			    }
 			}
