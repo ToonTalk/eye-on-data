@@ -4,6 +4,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -26,6 +27,8 @@ public class EyeOnData implements EntryPoint {
     
     private HTML tryItNowHTML = new HTML();
     
+    private HTML editAnotherTime = new HTML();
+    
     private int editorHeight = 300;
 
     /**
@@ -44,6 +47,10 @@ public class EyeOnData implements EntryPoint {
 	HTML welcome = new HTML(strings.welcomeMessage());
 	contents.add(welcome);
 	final RichTextEntry richTextEntry = new RichTextEntry();
+	pageId = Location.getParameter("pageId");
+	if (pageId != null) {
+	    fetchPreviousPageContents(richTextEntry);
+	}
 	previousEditorContents = richTextEntry.getHTML();
 	ClickHandler addHandler = new ClickHandler() {
 
@@ -67,6 +74,7 @@ public class EyeOnData implements EntryPoint {
 			    readOnlyPageId = result[1];
 			}
 			addTryItNowLink();
+			addEditAnotherTimeURL();
 		    }
 		    
 		};
@@ -89,13 +97,40 @@ public class EyeOnData implements EntryPoint {
 	HTML helpMessage = new HTML(strings.helpMessage());
 	contents.add(helpMessage);
 	contents.add(tryItNowHTML);
+	contents.add(editAnotherTime);
     }
     
+    private void fetchPreviousPageContents(final RichTextEntry richTextEntry) {
+	editAnotherTime.setHTML(strings.fetchingPagePleaseWait());
+	AsyncCallback<String[]> callback = new AsyncCallback<String[]>() {
+
+	    @Override
+	    public void onFailure(Throwable caught) {
+		Utilities.popupMessage(strings.serverErrorMessage());
+	    }
+
+	    @Override
+	    public void onSuccess(String[] result) {
+		richTextEntry.setHTML(result[0]);
+		addEditAnotherTimeURL();
+	    }
+	    
+	};
+	eyeOnDataService.fetchPreviousPageContents(pageId, callback);
+	
+    }
+
     private void addTryItNowLink() {
 	String url = GWT.getHostPageBaseURL() + "v/" + readOnlyPageId + ".html";
 	String newHTML = strings.tryItNow().replace("***URL***", url);
 	tryItNowHTML.setHTML(newHTML);
     }
+    
+    private void addEditAnotherTimeURL() {
+   	String url = GWT.getHostPageBaseURL() + "?pageId=" + pageId;
+   	String newHTML = strings.editAnotherTime().replace("***URL***", url);
+   	editAnotherTime.setHTML(newHTML);
+       }
 
     public static EyeOnData instance() {
         return instance;

@@ -8,5 +8,10 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("EyeOnData")
 public interface EyeOnDataService extends RemoteService {
+    
     String[] saveWebPage(String html, String pageId);
+    
+    String[] fetchPreviousPageContents(String pageId);
 }
+
+
