@@ -1,6 +1,7 @@
 package uk.ac.ox.oucs.eyeondata.server;
 
 import uk.ac.ox.oucs.eyeondata.client.EyeOnDataService;
+import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
 import uk.ac.ox.oucs.eyeondata.server.objectify.WebPage;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -19,7 +20,13 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	}
 	result[0] = pageId;
 	String safeHTML = escapeHTML(html);
-	WebPage webPage = new WebPage(pageId, safeHTML);
+	DAO dao = ServerUtilities.getDao();
+	WebPage webPage = dao.getWebPage(pageId);
+	if (webPage == null) {
+	    webPage = new WebPage(pageId, safeHTML);
+	} else {
+	    webPage.setHtml(safeHTML);
+	}
 	ServerUtilities.persistObject(webPage);
 	return result;
     }
