@@ -22,10 +22,13 @@ import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
 
 public class ServerUtilities {
     
-    static private DAO dao = new DAO();
+    private static DAO dao = new DAO();
     
-    final static String codesForUUID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-       
+    private final static String codesForUUID = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
+    
+    private final static byte[] non_breaking_space_regular_expression_bytes = {'[', (byte) 194, (byte) 160, ']'};
+    private static final String NON_BREAKING_SPACE_REGULAR_EXPRESSION = new String(non_breaking_space_regular_expression_bytes);
+
     public static String encodeUUID(UUID uuid) {
 	StringBuilder encoding = new StringBuilder();
 	long part1 = uuid.getLeastSignificantBits();
@@ -90,5 +93,68 @@ public class ServerUtilities {
 	in.close();
 	return contents.toString();
     }
+    
+    static public String removeHTMLMarkup(String html) {
+	if (html == null) {
+	    return html;
+	} else {
+	    String innerText = getInnerText(html);
+	    // now replace quotes, >, and <
+	    return removeHTMLTokens(innerText);
+	}
+    }
+    
+    static public String getInnerText(String html) {
+	// removes everything between < and > at any level
+	// E.g. <pre>foo<br><p>bar</p></pre> returns
+	// foo bar
+	// really find stuff between > and <
+	// note that removeHTMLMarkup calls this and also
+	// translates &nbsp; and the like
+	StringBuilder text = new StringBuilder();
+	int firstStart = html.indexOf('<');
+	if (firstStart < 0) {
+	    return html; // there were no tags
+	}
+	if (firstStart > 0) {
+	    text.append(html.substring(0,firstStart));	    
+	}
+	int endTag;
+	int start = 0;
+	while ((endTag = html.indexOf('>', start)) >= 0) {
+	    int startTag = html.indexOf('<', endTag);
+	    if (startTag < 0) {
+		text.append(html.substring(endTag + 1));
+//		System.out.println(html + " doesn't have matching tags.");
+		break;
+	    }
+	    text.append(html.substring(endTag + 1, startTag));
+	    text.append(' ');
+	    start = startTag;
+	};
+	return text.toString();
+    }
 
+    public static String removeHTMLTokens(String code) {
+	return replaceNonBreakingSpaces(
+		code.replaceAll("&nbsp;", " ")
+	            .replaceAll("&quot;", "\"")
+	            .replaceAll("&lt;", "<")
+	            .replaceAll("&gt;", ">")
+	            .replaceAll("\r","\r\n")
+	            .replaceAll("&amp;", "&")
+	            // replace non-breaking spaces with spaces
+	            //	           .replace((char) 160, (char) 32) // happens on the Mac when images are part of the HTML
+	            .replaceAll("\r\n\r\n","\r\n")) // remove blank lines
+	            .trim();
+    }
+
+    public static String replaceNonBreakingSpaces(String s) {
+	return s.replaceAll(NON_BREAKING_SPACE_REGULAR_EXPRESSION, " ");
+    }
+
+    public static boolean isURL(String expression) {
+	// could this be better
+	return expression.contains("://");
+    }
 }

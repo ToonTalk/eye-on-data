@@ -24,7 +24,9 @@ public class WebPageServlet extends HttpServlet {
     
     private enum Relation { GREATER_THAN, LESS_THAN, EQUAL, NOT_EQUAL, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL};
     
-    private static final String SEPERATOR = "\\+\\+\\+";
+    private static final String SEPERATOR_REGULAR_EXPRESSION = "\\+\\+\\+";
+    private static final String IMAGE_TOKEN_SEPERATOR = "%%%";
+    private static final int IMAGE_TOKEN_SEPERATOR_LENGTH = IMAGE_TOKEN_SEPERATOR.length();
     private static final String HTML_CONTENT_TYPE = "text/html; charset=utf-8";
     
     @Override
@@ -65,7 +67,7 @@ public class WebPageServlet extends HttpServlet {
 	// result[0] is part of the HTML (or null)
 	// result[1] is an error or warnings
 	HashMap<String, String> bindings = new HashMap<String, String>();
-	String[] parts = rawHTML.split(SEPERATOR);
+	String[] parts = rawHTML.split(SEPERATOR_REGULAR_EXPRESSION);
 	String result[] = new String[2];
 	result[0] = parts[0];
 	for (int i = 1; i < parts.length; i++) {
@@ -82,25 +84,34 @@ public class WebPageServlet extends HttpServlet {
 	return result;
     }
 
-    private String[] processInstruction(String instruction, HashMap<String, String> bindings, HttpServletRequest request) {
+    private String[] processInstruction(String instructionHTML, HashMap<String, String> bindings, HttpServletRequest request) {
 	// result[0] is part of the HTML (or null)
 	// result[1] is an error or warnings
 	String result[] = new String[2];
-	int ifIndex = instruction.indexOf("if");
+	String instructionHTMLWithImageTokens = replaceImagesWithTokens(instructionHTML, bindings);
+	String instruction = ServerUtilities.removeHTMLMarkup(instructionHTMLWithImageTokens);
+	if (instruction.isEmpty()) {
+	    return result;
+	}
+	String ifToken = "if ";
+	int ifIndex = instruction.indexOf(ifToken);
 	if (ifIndex >= 0) {
-	    int thenIndex = instruction.indexOf("then", ifIndex);
+	    String thenToken = "then";
+	    int thenIndex = instruction.indexOf(thenToken, ifIndex);
 	    if (thenIndex > 0) {
-		String condition = instruction.substring(ifIndex+2, thenIndex);
-		String conditionResult[] = evaluateCondition(condition, bindings);
+		String condition = instruction.substring(ifIndex+ifToken.length(), thenIndex);
+		String conditionResult[] = evaluateCondition(condition, bindings, request);
 		addError(conditionResult[1], result);
 		String trueBranch;
 		String falseBranch = null;
-		int elseIndex = instruction.indexOf("else", thenIndex);
+		String elseToken = " else ";
+		int elseTokenLength = elseToken.length();
+		int elseIndex = instruction.indexOf(elseToken, thenIndex);
 		if (elseIndex < 0) {
-		    trueBranch = instruction.substring(thenIndex+4);
+		    trueBranch = instruction.substring(thenIndex+thenToken.length());
 		} else {
-		    trueBranch = instruction.substring(thenIndex+4, elseIndex);
-		    falseBranch = instruction.substring(elseIndex+4);
+		    trueBranch = instruction.substring(thenIndex+elseTokenLength, elseIndex);
+		    falseBranch = instruction.substring(elseIndex+elseTokenLength);
 		}
 		if ("true".equals(conditionResult[0])) {
 		   return processInstruction(trueBranch, bindings, request);
@@ -115,68 +126,112 @@ public class WebPageServlet extends HttpServlet {
 		    return result;
 		}
 	    } else {
-		    addError("Found <i>if</i> but not <i>then</i>: " + instruction, result);
-		    return result;
+		addError("Found <i>if</i> but not <i>then</i>: " + instruction, result);
+		return result;
 	    }
 	}
-	String imageHTML = null;
-	int imageIndex = instruction.indexOf("<img src=");
-	if (imageIndex >= 0) {
-	    int closeImageIndex = instruction.indexOf(">", imageIndex);
-	    if (closeImageIndex > 0) {
-		imageHTML = instruction.substring(0, closeImageIndex+1);
-		if (imageHTML != null) {
-		    String remainingInstructions = instruction.substring(closeImageIndex+1);
-		    String[] equationParts = remainingInstructions.split("=");
-		    if (equationParts.length > 1) {
-			// alternates between name value-and-next-name
-			String variableName = null;
-			for (int i = 0; i < equationParts.length; i++) {
-			    String part = equationParts[i].trim();
-			    if (i == 0) {
-				variableName = part;
-			    } else {
-				int lastSpaceIndex = part.lastIndexOf(' ');
-				String[] value;
-				if (lastSpaceIndex >= 0 && i+1 < equationParts.length) {
-				    // space in the last one doesn't matter
-				    String valueExpression = part.substring(0, lastSpaceIndex);
-				    value = evaluate(valueExpression, bindings);
-				    variableName = part.substring(lastSpaceIndex+1);
-				} else {
-				    value = evaluate(part, bindings);  
-				}
-				if (value[0] != null) {
-				    bindings.put(variableName, value[0]);
-				}
-				addError(value[1], result);
-			    }
-			}
-		    }
-		    String width = bindings.get("width");
-		    String height = bindings.get("height");
-		    if (width != null) {
-			imageHTML = addAttribute(imageHTML, "width", width);
-			bindings.remove("width");
-		    }
-		    if (height != null) {
-			imageHTML = addAttribute(imageHTML, "height", height);
-			bindings.remove("height");
-		    }
-		    result[0] = imageHTML;
-		    return result;
+	int imageTokenIndex = instruction.indexOf(IMAGE_TOKEN_SEPERATOR);
+	if (imageTokenIndex >= 0) {
+	    int imageTokenStartIndex = imageTokenIndex+IMAGE_TOKEN_SEPERATOR_LENGTH;
+	    int imageTokenEndIndex = instruction.indexOf(IMAGE_TOKEN_SEPERATOR, imageTokenStartIndex);
+	    int equalIndex = instruction.indexOf("=");
+	    if (equalIndex >= 0) {
+		if (equalIndex > imageTokenStartIndex) {
+		    // equations after the image
+		    result[1] = processEquations(instruction.substring(imageTokenEndIndex+IMAGE_TOKEN_SEPERATOR_LENGTH, equalIndex).trim(), instruction.substring(equalIndex+1).trim(), bindings, request);
+		} else {
+		    result[1] = processEquations(instruction.substring(0, equalIndex).trim(), instruction.substring(equalIndex+1, imageTokenStartIndex).trim(), bindings, request);		    
 		}
 	    }
-	}
-	// for now spaces on both sides since HTML could have = inside of elements
-	// but with some effort could ignore those
-	int equalIndex = instruction.indexOf(" = "); 
-	if (equalIndex >= 0) {
-	    // +3 to skip over " = "
-	    result[1] = processEquation(instruction.substring(0, equalIndex).trim(), instruction.substring(equalIndex+3).trim(), bindings, request);
+	    String imageToken = instruction.substring(imageTokenStartIndex, imageTokenEndIndex);
+	    String imageHTML = bindings.get(imageToken);
+	    String width = bindings.get("width");
+	    String height = bindings.get("height");
+	    if (width != null) {
+		imageHTML = addAttribute(imageHTML, "width", width);
+		bindings.remove("width");
+	    }
+	    if (height != null) {
+		imageHTML = addAttribute(imageHTML, "height", height);
+		bindings.remove("height");
+	    }
+	    result[0] = imageHTML;
 	    return result;
 	}
-	return evaluate(instruction.trim(), bindings);
+	int equalIndex = instruction.indexOf("="); 
+	if (equalIndex >= 0) {
+	    result[1] = processEquations(instruction.substring(0, equalIndex).trim(), instruction.substring(equalIndex+1).trim(), bindings, request);
+	    return result;
+	}
+	return evaluate(instruction.trim(), bindings, request);
+    }
+    
+    /**
+     * @param instructionHTML
+     * @param bindings
+     * @return the instructionHTML with IMG elements replaced by unique tokens
+     * and the unique tokens added to bindings
+     */
+    private String replaceImagesWithTokens(String instructionHTML, HashMap<String, String> bindings) {
+	String instructionWithTokens = "";
+	int index = 0;
+	int imageIndex;
+	if ((imageIndex = instructionHTML.indexOf("<img src=", index)) >= 0) {
+	    instructionWithTokens += instructionHTML.substring(index, imageIndex);
+	    int closeImageIndex = instructionHTML.indexOf(">", imageIndex);
+	    if (closeImageIndex > 0) {
+		String imageHTML = instructionHTML.substring(imageIndex, closeImageIndex+1);
+		String imageToken = ServerUtilities.generateGUIDString();
+		bindings.put(imageToken, imageHTML);
+		// temporarily add SEPERATOR tokens to for subsequent processing
+		instructionWithTokens += IMAGE_TOKEN_SEPERATOR + imageToken + IMAGE_TOKEN_SEPERATOR;
+		index = closeImageIndex+1;
+//		if (imageHTML != null) {
+//		    String remainingInstructionsHTML = instructionHTML.substring(closeImageIndex+1);
+//		    String remainingInstructions = ServerUtilities.removeHTMLMarkup(remainingInstructionsHTML);
+//		    String[] equationParts = remainingInstructions.split("=");
+//		    if (equationParts.length > 1) {
+//			// alternates between name value-and-next-name
+//			String variableName = null;
+//			for (int i = 0; i < equationParts.length; i++) {
+//			    String part = equationParts[i].trim();
+//			    if (i == 0) {
+//				variableName = part;
+//			    } else {
+//				int lastSpaceIndex = part.lastIndexOf(' ');
+//				String[] value;
+//				if (lastSpaceIndex >= 0 && i+1 < equationParts.length) {
+//				    // space in the last one doesn't matter
+//				    String valueExpression = part.substring(0, lastSpaceIndex);
+//				    value = evaluate(valueExpression, bindings);
+//				    variableName = part.substring(lastSpaceIndex+1);
+//				} else {
+//				    value = evaluate(part, bindings);  
+//				}
+//				if (value[0] != null) {
+//				    bindings.put(variableName, value[0]);
+//				}
+//				addError(value[1], result);
+//			    }
+//			}
+//		    }
+//		    String width = bindings.get("width");
+//		    String height = bindings.get("height");
+//		    if (width != null) {
+//			imageHTML = addAttribute(imageHTML, "width", width);
+//			bindings.remove("width");
+//		    }
+//		    if (height != null) {
+//			imageHTML = addAttribute(imageHTML, "height", height);
+//			bindings.remove("height");
+//		    }
+//		    result[0] = imageHTML;
+//		    return result;
+//		}
+	    }
+	}
+	instructionWithTokens += instructionHTML.substring(index);
+	return instructionWithTokens;
     }
 
     private void addError(String errorMessage, String[] result) {
@@ -199,13 +254,23 @@ public class WebPageServlet extends HttpServlet {
 	}
     }
 
-    private String[] evaluate(String expression, HashMap<String, String> bindings) {
+    private String[] evaluate(String expression, HashMap<String, String> bindings, HttpServletRequest request) {
 	String result[] = new String[2];
+	if (ServerUtilities.isURL(expression)) {
+	    String[] urlContents = ServerUtilities.fetchURLContents(expression, request);
+	    if (urlContents[0] != null) {
+		toCSV(urlContents[0], result);
+		return result;
+	    } else {
+		result[1] = "No contents found for " + expression + ". " + urlContents[1];
+		return result;
+	    }
+	}
 	String[] parts;
 	Double[] numbers;
 	parts = expression.split("\\+");
 	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
 	    if (numbers[0] != null) {
 		Double sum = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -219,7 +284,7 @@ public class WebPageServlet extends HttpServlet {
 	}
 	parts = expression.split("\\-");
 	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
 	    if (numbers[0] != null) {
 		Double difference = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -233,7 +298,7 @@ public class WebPageServlet extends HttpServlet {
 	}
 	parts = expression.split("\\*");
 	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
 	    if (numbers[0] != null) {
 		Double product = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -245,10 +310,9 @@ public class WebPageServlet extends HttpServlet {
 	    }
 	    return result;
 	}
-	// Don't pick up </element ...>
-	parts = expression.split(" / ");
+	parts = expression.split("/");
 	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result);
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
 	    if (numbers[0] != null) {
 		Double dividend = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -282,47 +346,76 @@ public class WebPageServlet extends HttpServlet {
 	return result;
     }
 
-    private Double[] evaluateAllToNumbers(String[] parts, HashMap<String, String> bindings, String[] result) {
+    /**
+     * @param data
+     * @param result -- result[0] is comma separated version of data; result[1] any error messages
+     */
+    private void toCSV(String data, String[] result) {
+	String[] dataValues = data.split(",");
+	if (dataValues.length < 2) {
+	    dataValues = data.split("\r");
+	}
+	if (dataValues.length < 2) {
+	    dataValues = data.split("\n");
+	}
+	if (dataValues.length < 2) {
+	    dataValues = data.split("\t");
+	}
+	if (dataValues.length < 2) {
+	    result[0] = data;
+	} else {
+	    result[0] = dataValues[0];
+	    for (int i = 1; i < dataValues.length; i++) {
+		result[0] += "," + dataValues[i];
+	    }
+	}	
+    }
+
+    private Double[] evaluateAllToNumbers(String[] parts, HashMap<String, String> bindings, String[] result, HttpServletRequest request) {
 	Double[] numbers = new Double[parts.length];
 	for (int i = 0; i < parts.length; i++) {
-	    numbers[i] = evaluateToNumber(parts[i].trim(), bindings, result);
+	    numbers[i] = evaluateToNumber(parts[i].trim(), bindings, result, request);
 	}
 	return numbers;
     }
     
-    private Double evaluateToNumber(String expression, HashMap<String, String> bindings, String[] result) {
-	String[] evaluation = evaluate(expression, bindings);
-	if (evaluation[0] != null) {
+    private Double evaluateToNumber(String expression, HashMap<String, String> bindings, String[] result, HttpServletRequest request) {
+	String[] evaluation = evaluate(expression, bindings, request);
+	String value = evaluation[0];
+	if (value != null) {
+	    int commaIndex = value.indexOf(",");
+	    if (commaIndex > 0) {
+		value = value.substring(0, commaIndex);
+	    }
 	    try {
-		return Double.parseDouble(evaluation[0]);
+		return Double.parseDouble(value);
 	    } catch (NumberFormatException e) {
-		addError(" The following is not a number: " + evaluation[0] + " while computing " + expression, result);
-		// null value is left in numbers[i]
+		addError(" The following is not a number: " + value + " while computing " + expression, result);
 	    }
 	} 
 	addError(evaluation[1], result);
 	return null;
     }
     
-    private String[] evaluateCondition(String condition, HashMap<String, String> bindings) {
+    private String[] evaluateCondition(String condition, HashMap<String, String> bindings, HttpServletRequest request) {
 	// result[0] is either "true", "false", or null
 	// result[1] any errors
 	String result[] = new String[2];
 	String[] parts;
 	Relation relation;
-	parts = condition.split("&gt;=", 2);
+	parts = condition.split(">=", 2);
 	if (parts.length == 2) {
 	    relation = Relation.GREATER_THAN_OR_EQUAL;
 	} else {
-	    parts = condition.split("&gt;", 2);
+	    parts = condition.split(">", 2);
 	    if (parts.length == 2) {
 		relation = Relation.GREATER_THAN;
 	    } else {
-		parts = condition.split("&lt;=", 2);
+		parts = condition.split("<", 2);
 		if (parts.length == 2) {
 		    relation = Relation.LESS_THAN_OR_EQUAL;
 		} else {
-		    parts = condition.split("&lt;", 2);
+		    parts = condition.split("<", 2);
 		    if (parts.length == 2) {
 			relation = Relation.LESS_THAN;
 		    } else {
@@ -342,8 +435,8 @@ public class WebPageServlet extends HttpServlet {
 		}
 	    }
 	}
-	Double leftValue = evaluateToNumber(parts[0].trim(), bindings, result);
-	Double rightValue = evaluateToNumber(parts[1].trim(), bindings, result);
+	Double leftValue = evaluateToNumber(parts[0].trim(), bindings, result, request);
+	Double rightValue = evaluateToNumber(parts[1].trim(), bindings, result, request);
 	if (leftValue == null || rightValue == null) {
 	    return result;
 	}
@@ -370,20 +463,33 @@ public class WebPageServlet extends HttpServlet {
 	return result;
     }
 
-    private String processEquation(String left, String right, HashMap<String, String> bindings, HttpServletRequest request) {
+    private String processEquations(String left, String right, HashMap<String, String> bindings, HttpServletRequest request) {
 	// return error/warnings or null if none
-	try {
-	    Double.parseDouble(right);
-	    matchDataAndVariables(left, right, bindings);
-	    return null;
-	} catch (NumberFormatException e) {
-	    String[] urlContents = ServerUtilities.fetchURLContents(right, request);
-	    if (urlContents[0] != null) {
-		matchDataAndVariables(left, urlContents[0], bindings);
-		return urlContents[1];
-	    } else {
-		return "No contents found for " + left + ". " + urlContents[1];
+	// right may have following equations
+	int equalSignIndex = right.indexOf("=");
+	if (equalSignIndex >= 0) {
+	    int spaceBeforeEqualSignIndex = equalSignIndex;
+	    while (spaceBeforeEqualSignIndex < right.length() && right.charAt(spaceBeforeEqualSignIndex-1) == ' ') {
+		// ignore spaces before the equal sign
+		spaceBeforeEqualSignIndex--;
 	    }
+	    int nextWordStartIndex = right.lastIndexOf(" ", spaceBeforeEqualSignIndex-1);
+	    if (nextWordStartIndex >= 0) {
+		String nextLeft = right.substring(nextWordStartIndex+1, spaceBeforeEqualSignIndex).trim();
+		String nextRight = right.substring(equalSignIndex+1).trim();
+		String errors = processEquations(nextLeft, nextRight, bindings, request);
+		if (errors != null) {
+		    return errors;
+		}
+		right = right.substring(0, nextWordStartIndex);
+	    }
+	} 
+	String[] rightEvaluated = evaluate(right, bindings, request);
+	if (rightEvaluated[0] != null) {
+	    String rightValues = rightEvaluated[0];
+	    return matchDataAndVariables(left, rightValues, bindings);
+	} else {
+	    return rightEvaluated[1];
 	}
     }
 
@@ -391,15 +497,6 @@ public class WebPageServlet extends HttpServlet {
 	// returns warning/error or null
 	String[] variableNames = variables.split(",");
 	String[] dataValues = data.split(",");
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\r");
-	}
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\n");
-	}
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\t");
-	}
 	if (variableNames.length > dataValues.length) {
 	    return "More variables (" + variableNames.length + ") than data values (" + dataValues.length + ")";
 	}

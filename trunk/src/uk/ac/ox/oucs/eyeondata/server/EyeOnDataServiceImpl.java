@@ -2,6 +2,7 @@ package uk.ac.ox.oucs.eyeondata.server;
 
 import uk.ac.ox.oucs.eyeondata.client.EyeOnDataService;
 import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
+import uk.ac.ox.oucs.eyeondata.server.objectify.PageId;
 import uk.ac.ox.oucs.eyeondata.server.objectify.ReadOnlyPageId;
 import uk.ac.ox.oucs.eyeondata.server.objectify.WebPage;
 
@@ -32,6 +33,8 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	    String readOnlyPageId = ServerUtilities.generateGUIDString();
 	    ReadOnlyPageId readOnlyPageIdEntry = new ReadOnlyPageId(readOnlyPageId, pageId);
 	    ServerUtilities.persistObject(readOnlyPageIdEntry);
+	    PageId pageIdEntry = new PageId(readOnlyPageId, pageId);
+	    ServerUtilities.persistObject(pageIdEntry);
 	    result[1] = readOnlyPageId;
 	} else {
 	    webPage.setHtml(html);
@@ -42,15 +45,17 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 
     @Override
     public String[] fetchPreviousPageContents(String pageId) {
-	String[] result = new String[2];
+	String[] result = new String[3];
 	// result[0] = page contents
-	// result[1] = errors/warnings
+	// result[1] = readOnlyPageId
+	// result[2] = errors/warnings
 	DAO dao = ServerUtilities.getDao();
 	WebPage webPage = dao.getWebPage(pageId);
 	if (webPage == null) {
-	    result[1] = "Unable to find the previous contents of a page with id: " + pageId;
+	    result[2] = "Unable to find the previous contents of a page with id: " + pageId;
 	} else {
 	    result[0] = webPage.getHtml();
+	    result[1] = dao.getReadOnlyPageId(pageId);
 	}
 	return result;
     }
