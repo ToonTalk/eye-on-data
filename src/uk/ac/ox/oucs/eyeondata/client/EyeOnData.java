@@ -111,13 +111,20 @@ public class EyeOnData implements EntryPoint {
 
 	    @Override
 	    public void onSuccess(String[] result) {
-		richTextEntry.setHTML(result[0]);
-		addEditAnotherTimeURL();
+		if (result[0] != null) {
+		    richTextEntry.setHTML(result[0]);
+		    addEditAnotherTimeURL();
+		    readOnlyPageId = result[1];
+		} else {
+		    editAnotherTime.setHTML("");
+		}
+		if (result[2] != null) {
+		    Utilities.popupMessage(result[2]);
+		}
 	    }
 	    
 	};
 	eyeOnDataService.fetchPreviousPageContents(pageId, callback);
-	
     }
 
     private void addTryItNowLink() {
