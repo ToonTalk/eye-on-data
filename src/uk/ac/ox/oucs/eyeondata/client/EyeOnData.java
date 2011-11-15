@@ -4,6 +4,9 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
@@ -48,6 +51,13 @@ public class EyeOnData implements EntryPoint {
 	contents.add(welcome);
 	final RichTextEntry richTextEntry = new RichTextEntry();
 	pageId = Location.getParameter("pageId");
+	if (pageId == null) {
+	    String url = Location.getHref();
+	    int hashIndex = url.indexOf('#');
+	    if (hashIndex >= 0) {
+		pageId = url.substring(hashIndex+1);
+	    }
+	}
 	if (pageId != null) {
 	    fetchPreviousPageContents(richTextEntry);
 	}
@@ -84,15 +94,24 @@ public class EyeOnData implements EntryPoint {
 	    
 	};
 	richTextEntry.addSaveButtonClickHandler(addHandler);
-	ClickHandler cancelHandler = new ClickHandler() {
+	//	ClickHandler cancelHandler = new ClickHandler() {
+//
+//	    @Override
+//	    public void onClick(ClickEvent event) {
+//		richTextEntry.setHTML(previousEditorContents);
+//	    }
+//	    
+//	};
+//	richTextEntry.addCancelButtonClickHandler(cancelHandler);
+	KeyPressHandler keyPressHandler = new KeyPressHandler() {
 
 	    @Override
-	    public void onClick(ClickEvent event) {
-		richTextEntry.setHTML(previousEditorContents);
+	    public void onKeyPress(KeyPressEvent event) {
+		tryItNowHTML.setHTML("");		
 	    }
 	    
 	};
-	richTextEntry.addCancelButtonClickHandler(cancelHandler);
+	richTextEntry.addKeyPressHandler(keyPressHandler);
 	contents.add(richTextEntry);
 	HTML helpMessage = new HTML(strings.helpMessage());
 	contents.add(helpMessage);
@@ -134,10 +153,10 @@ public class EyeOnData implements EntryPoint {
     }
     
     private void addEditAnotherTimeURL() {
-   	String url = GWT.getHostPageBaseURL() + "?pageId=" + pageId;
-   	String newHTML = strings.editAnotherTime().replace("***URL***", url);
-   	editAnotherTime.setHTML(newHTML);
-       }
+	String newURL = Window.Location.createUrlBuilder().setHash(pageId).buildString();
+	Window.Location.replace(newURL);
+   	editAnotherTime.setHTML(strings.editAnotherTime());
+    }
 
     public static EyeOnData instance() {
         return instance;

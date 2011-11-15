@@ -14,8 +14,8 @@ import com.google.gwt.user.client.ui.Composite;
 public class RichTextEntry extends Composite {
     private RichTextArea richTextArea = new RichTextArea();
     private RichTextToolbar toolBar = new RichTextToolbar(richTextArea);
-    private Button saveButton = new EyeOnDataButton(EyeOnData.strings.saveButtonLabel());
-    private Button cancelButton = new EyeOnDataButton(EyeOnData.strings.cancelButtonLabel());
+    private Button saveButton = new Button(EyeOnData.strings.saveButtonLabel());
+//    private Button cancelButton = new EyeOnDataButton(EyeOnData.strings.cancelButtonLabel());
     
     public RichTextEntry() {
 	this(null);
@@ -32,10 +32,10 @@ public class RichTextEntry extends Composite {
 	}
 	panel.add(richTextArea);
 	HorizontalPanel buttonPanel = new HorizontalPanel();
-	saveButton.setWidth("50px");
-	cancelButton.setWidth("80px");
+//	saveButton.setWidth("50px");
+//	cancelButton.setWidth("80px");
 	buttonPanel.add(saveButton);
-	buttonPanel.add(cancelButton);
+//	buttonPanel.add(cancelButton);
 	buttonPanel.setSpacing(6);
 	panel.add(buttonPanel);
 	// following looks nicer but buttons can be hard to reach if horizontally scrolling
@@ -72,9 +72,13 @@ public class RichTextEntry extends Composite {
 	saveButton.addClickHandler(addHandler);	
     }
     
-    public void addCancelButtonClickHandler(ClickHandler cancelHandler) {
-	cancelButton.addClickHandler(cancelHandler);	
+    public void addKeyPressHandler(KeyPressHandler keyPressHandler) {
+	richTextArea.addKeyPressHandler(keyPressHandler);
     }
+    
+//    public void addCancelButtonClickHandler(ClickHandler cancelHandler) {
+//	cancelButton.addClickHandler(cancelHandler);	
+//    }
 
     public RichTextArea getRichTextArea() {
         return richTextArea;
