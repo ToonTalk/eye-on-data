@@ -4,6 +4,7 @@
 package uk.ac.ox.oucs.eyeondata.server;
 
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -29,6 +30,8 @@ public class WebPageServlet extends HttpServlet {
     private static final String IMAGE_TOKEN_SEPERATOR = "%%%";
     private static final int IMAGE_TOKEN_SEPERATOR_LENGTH = IMAGE_TOKEN_SEPERATOR.length();
     private static final String HTML_CONTENT_TYPE = "text/html; charset=utf-8";
+    
+    private DecimalFormat decimalFormat = new DecimalFormat();
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -294,7 +297,7 @@ public class WebPageServlet extends HttpServlet {
 		    sum += number;
 		}			
 	    }
-	    result[0] = Double.toString(sum);
+	    result[0] = doubleToString(sum);
 	    return result;
 	}
 	parts = ServerUtilities.removeEmptyLines(expression.split("\\*"));
@@ -305,7 +308,7 @@ public class WebPageServlet extends HttpServlet {
 		if (number != null) {
 		    product *= number;
 		}			
-		result[0] = Double.toString(product);
+		result[0] = doubleToString(product);
 	    }
 	    return result;
 	}
@@ -321,7 +324,7 @@ public class WebPageServlet extends HttpServlet {
 			dividend /= number;
 		    }
 		}			
-		result[0] = Double.toString(dividend);
+		result[0] = doubleToString(dividend);
 	    }
 	    return result;
 	}
@@ -333,23 +336,26 @@ public class WebPageServlet extends HttpServlet {
 		if (number != null) {
 		    difference -= number;
 		}			
-		result[0] = Double.toString(difference);
+		result[0] = doubleToString(difference);
 	    }
 	    return result;
 	}
 	String value = bindings.get(expression);
-	if (value != null) {
-	    result[0] = value;
-	} else {
-	    // can be either a double or long
-	    try {
-		Double.parseDouble(expression);
-		result[0] = expression;
-	    } catch (NumberFormatException e) {
-		addError(" The following is neither a number nor the value of a variable: " + expression, result);
-	    }
+	if (value == null) {
+	    value = expression;
+	}	
+	try {
+	    double number = Double.parseDouble(value);
+	    result[0] = doubleToString(number);
+	} catch (NumberFormatException e) {
+	    addError(" The following is neither a number nor the value of a variable: " + expression, result);
 	}
 	return result;
+    }
+
+    private String doubleToString(Double number) {
+	decimalFormat.setMaximumFractionDigits(3);
+	return decimalFormat.format(number);
     }
 
     /**
@@ -357,22 +363,18 @@ public class WebPageServlet extends HttpServlet {
      * @param result -- result[0] is comma separated version of data; result[1] any error messages
      */
     private void toCSV(String data, String[] result) {
-	String[] dataValues = data.split(",");
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\r");
-	}
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\n");
-	}
-	if (dataValues.length < 2) {
-	    dataValues = data.split("\t");
-	}
-	if (dataValues.length < 2) {
-	    result[0] = data;
-	} else {
-	    result[0] = dataValues[0];
-	    for (int i = 1; i < dataValues.length; i++) {
-		result[0] += "," + dataValues[i];
+	String[] dataValues = data.split("[,\r\n\t]");
+	for (int i = 0; i < dataValues.length; i++) {
+	    // ignore non-numeric data (for now)
+	    try {
+		Double.parseDouble(dataValues[i]);
+		if (result[0] == null) {
+		    result[0] = dataValues[i];
+		} else {
+		    result[0] += "," + dataValues[i];
+		}
+	    } catch (NumberFormatException e) {
+		// just ignore
 	    }
 	}	
     }
