@@ -4,6 +4,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.RichTextArea;
@@ -31,13 +32,12 @@ public class RichTextEntry extends Composite {
 	    richTextArea.setHTML(EyeOnData.strings.defaultEditorContents());
 	}
 	panel.add(richTextArea);
-	HorizontalPanel buttonPanel = new HorizontalPanel();
-//	saveButton.setWidth("50px");
-//	cancelButton.setWidth("80px");
-	buttonPanel.add(saveButton);
+//	HorizontalPanel buttonPanel = new HorizontalPanel();
+//	buttonPanel.add(saveButton);
 //	buttonPanel.add(cancelButton);
-	buttonPanel.setSpacing(6);
-	panel.add(buttonPanel);
+//	buttonPanel.setSpacing(6);)
+	panel.add(saveButton);
+	panel.setCellHorizontalAlignment(saveButton, HasAlignment.ALIGN_CENTER);
 	// following looks nicer but buttons can be hard to reach if horizontally scrolling
 	// is going on
 //	panel.setCellHorizontalAlignment(buttonPanel, HasHorizontalAlignment.ALIGN_CENTER);
