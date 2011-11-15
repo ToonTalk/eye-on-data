@@ -4,6 +4,7 @@
 package uk.ac.ox.oucs.eyeondata.server;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.servlet.ServletException;
@@ -266,68 +267,73 @@ public class WebPageServlet extends HttpServlet {
 		return result;
 	    }
 	}
-	String[] parts;
-	Double[] numbers;
-	parts = expression.split("\\+");
-	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
-	    if (numbers[0] != null) {
-		Double sum = numbers[0];
-		for (int i = 1; i < numbers.length; i++) {
-		    if (numbers[i] != null) {
-			sum += numbers[i];
-		    }			
+	int openParenIndex = expression.indexOf('(');
+	if (openParenIndex >= 0) {
+	    int closeParenIndex = expression.indexOf(')', openParenIndex);
+	    if (closeParenIndex >= 0) {
+		String insideParens = expression.substring(openParenIndex+1, closeParenIndex);
+		String[] insideParensEvaluated = evaluate(insideParens, bindings, request);
+		if (insideParensEvaluated[0] == null) {
+		    return insideParensEvaluated;
 		}
-		result[0] = Double.toString(sum);
+		// continue with the parenthesised expression replaced by its value
+		addError(insideParensEvaluated[1], result);
+		expression = expression.substring(0, openParenIndex) + 
+			     insideParensEvaluated[0] + 
+			     expression.substring(closeParenIndex+1);
 	    }
+	}
+	ArrayList<String> parts;
+	ArrayList<Double> numbers;
+	parts = ServerUtilities.removeEmptyLines(expression.split("\\+"));
+	if (parts.size() > 1) {
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
+	    Double sum = 0.0;
+	    for (Double number : numbers) {
+		if (number != null) {
+		    sum += number;
+		}			
+	    }
+	    result[0] = Double.toString(sum);
 	    return result;
 	}
-	parts = expression.split("\\-");
-	if (parts.length > 1) {
+	parts = ServerUtilities.removeEmptyLines(expression.split("\\*"));
+	if (parts.size() > 1) {
 	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
-	    if (numbers[0] != null) {
-		Double difference = numbers[0];
-		for (int i = 1; i < numbers.length; i++) {
-		    if (numbers[i] != null) {
-			difference -= numbers[i];
-		    }			
-		}
-		result[0] = Double.toString(difference);
-	    }
-	    return result;
-	}
-	parts = expression.split("\\*");
-	if (parts.length > 1) {
-	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
-	    if (numbers[0] != null) {
-		Double product = numbers[0];
-		for (int i = 1; i < numbers.length; i++) {
-		    if (numbers[i] != null) {
-			product *= numbers[i];
-		    }			
-		}
+	    Double product = 1.0;
+	    for (Double number : numbers) {
+		if (number != null) {
+		    product *= number;
+		}			
 		result[0] = Double.toString(product);
 	    }
 	    return result;
 	}
-	parts = expression.split("/");
-	if (parts.length > 1) {
+	parts = ServerUtilities.removeEmptyLines(expression.split("/"));
+	if (parts.size() > 1) {
 	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
-	    if (numbers[0] != null) {
-		Double dividend = numbers[0];
-		for (int i = 1; i < numbers.length; i++) {
-		    if (numbers[i] != null) {
-			if (numbers[i] != 0.0) {
-			    dividend /= numbers[i];
-			} else {
-			    if (result[1] == null) {
-				result[1] = "";
-			    }
-			    result[0] += "Unable to divide by zero in " + expression;
-			}
-		    }			
-		}
+	    Double dividend = 1.0;
+	    for (Double number : numbers) {
+		if (number != null) {
+		    if (number == 0) {
+			result[0] += "Unable to divide by zero in " + expression;
+		    } else {
+			dividend /= number;
+		    }
+		}			
 		result[0] = Double.toString(dividend);
+	    }
+	    return result;
+	}
+	parts = ServerUtilities.removeEmptyLines(expression.split("\\-"));
+	if (parts.size() > 1) {
+	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
+	    Double difference = 0.0;
+	    for (Double number : numbers) {
+		if (number != null) {
+		    difference -= number;
+		}			
+		result[0] = Double.toString(difference);
 	    }
 	    return result;
 	}
@@ -371,10 +377,10 @@ public class WebPageServlet extends HttpServlet {
 	}	
     }
 
-    private Double[] evaluateAllToNumbers(String[] parts, HashMap<String, String> bindings, String[] result, HttpServletRequest request) {
-	Double[] numbers = new Double[parts.length];
-	for (int i = 0; i < parts.length; i++) {
-	    numbers[i] = evaluateToNumber(parts[i].trim(), bindings, result, request);
+    private ArrayList<Double> evaluateAllToNumbers(ArrayList<String> parts, HashMap<String, String> bindings, String[] result, HttpServletRequest request) {
+	ArrayList<Double> numbers = new ArrayList<Double>(parts.size());
+	for (String part : parts) {
+	    numbers.add(evaluateToNumber(part.trim(), bindings, result, request));
 	}
 	return numbers;
     }
