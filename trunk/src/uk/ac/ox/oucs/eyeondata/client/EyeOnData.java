@@ -32,7 +32,9 @@ public class EyeOnData implements EntryPoint {
     
     private HTML editAnotherTime = new HTML();
     
-    private int editorHeight = 300;
+    private int heightOfAllButEditor = 340;
+    
+    private int widthOfAllButEditor = 50;
 
     /**
      * Create a remote service proxy to talk to the server-side service.
@@ -153,6 +155,7 @@ public class EyeOnData implements EntryPoint {
     }
     
     private void addEditAnotherTimeURL() {
+	// see http://stackoverflow.com/questions/5402732/gwt-set-url-without-submit
 	String newURL = Window.Location.createUrlBuilder().setHash(pageId).buildString();
 	Window.Location.replace(newURL);
    	editAnotherTime.setHTML(strings.editAnotherTime());
@@ -161,8 +164,12 @@ public class EyeOnData implements EntryPoint {
     public static EyeOnData instance() {
         return instance;
     }
+    
+    public int getEditorWidth() {
+        return Window.getClientWidth()-widthOfAllButEditor;
+    }
 
     public int getEditorHeight() {
-        return editorHeight;
+        return Window.getClientHeight()-heightOfAllButEditor;
     }
 }

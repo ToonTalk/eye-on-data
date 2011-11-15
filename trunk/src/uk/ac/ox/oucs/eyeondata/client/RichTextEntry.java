@@ -24,6 +24,7 @@ public class RichTextEntry extends Composite {
        
     public RichTextEntry(String initialHTML) {
 	VerticalPanel panel = new VerticalPanel();
+	panel.setHorizontalAlignment(HasAlignment.ALIGN_CENTER);
 	panel.add(toolBar);
 	DOM.setStyleAttribute(panel.getElement(), "marginRight", "4px");
 	if (initialHTML != null) {
@@ -31,26 +32,22 @@ public class RichTextEntry extends Composite {
 	} else {
 	    richTextArea.setHTML(EyeOnData.strings.defaultEditorContents());
 	}
+	panel.setSpacing(4);
 	panel.add(richTextArea);
 //	HorizontalPanel buttonPanel = new HorizontalPanel();
 //	buttonPanel.add(saveButton);
 //	buttonPanel.add(cancelButton);
 //	buttonPanel.setSpacing(6);)
 	panel.add(saveButton);
-	panel.setCellHorizontalAlignment(saveButton, HasAlignment.ALIGN_CENTER);
 	// following looks nicer but buttons can be hard to reach if horizontally scrolling
 	// is going on
 //	panel.setCellHorizontalAlignment(buttonPanel, HasHorizontalAlignment.ALIGN_CENTER);
 	richTextArea.setFocus(true);
 	// All composites must call initWidget() in their constructors.
 	initWidget(panel);
-	// add 50 to have a bit of a margin for growth and to minimise the need for
-	// scroll bars but don't get too large
-	int windowWidth = Window.getClientWidth();
-	int richTextWidth = windowWidth;
-	richTextArea.setWidth(richTextWidth-30 + "px");
+	int richTextWidth = EyeOnData.instance().getEditorWidth();
 	int richTextHeight = EyeOnData.instance().getEditorHeight();
-	richTextArea.setHeight(richTextHeight + "px");
+	richTextArea.setPixelSize(richTextWidth, richTextHeight);
 	KeyPressHandler keyPressHandler = new KeyPressHandler() {
 
 	    @Override
@@ -66,6 +63,7 @@ public class RichTextEntry extends Composite {
 	    
 	};
 	richTextArea.addKeyPressHandler(keyPressHandler);
+	panel.setStylePrimaryName("eye-on-data-editor");
     }
     
     public void addSaveButtonClickHandler(ClickHandler addHandler) {
