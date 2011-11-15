@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -157,4 +158,15 @@ public class ServerUtilities {
 	// could this be better
 	return expression.contains("://");
     }
+    
+    public static ArrayList<String> removeEmptyLines(String lines[]) {
+	ArrayList<String> result = new ArrayList<String>();
+        for (int i = 0; i < lines.length; i++) {
+            if (!lines[i].trim().isEmpty()) { 
+        	result.add(lines[i]);
+            }
+        }	
+        return result;
+    }
+    
 }
