@@ -243,9 +243,9 @@ public class WebPageServlet extends HttpServlet {
 	    return;
 	}
 	if (result[1] == null) {
-	    result[1] = errorMessage;
+	    result[1] = backgroundColor("yellow", errorMessage);
 	} else {
-	    result[1] += " " + errorMessage;
+	    result[1] += " " + backgroundColor("yellow", errorMessage);
 	}
     }
 
@@ -349,8 +349,13 @@ public class WebPageServlet extends HttpServlet {
 	    result[0] = doubleToString(number);
 	} catch (NumberFormatException e) {
 	    addError(" The following is neither a number nor the value of a variable: " + expression, result);
+	    result[0] = backgroundColor("yellow", "0");
 	}
 	return result;
+    }
+
+    private String backgroundColor(String color, String text) {
+	return "<font style='background-color:" + color + ";'>" + text + "</font>";
     }
 
     private String doubleToString(Double number) {
@@ -510,6 +515,27 @@ public class WebPageServlet extends HttpServlet {
 	}
 	for (int i = 0; i < variableNames.length; i++) {
 	    bindings.put(variableNames[i].trim(), dataValues[i].trim());
+	}
+	if (variableNames.length < dataValues.length) {
+	    String lastVariableName = variableNames[variableNames.length-1];
+	    int lastNumber = -1;
+	    int counter = 1;
+	    int index = lastVariableName.length()-1;
+	    while (index >= 0 && Character.isDigit(lastVariableName.charAt(index))) {
+		if (lastNumber < 0) {
+		    lastNumber = lastVariableName.charAt(index)-'0';
+		} else {
+		    lastNumber += (lastVariableName.charAt(index)-'0')*10^counter;
+		}
+		counter++;
+		index--;
+	    }
+	    if (lastNumber >= 0) {
+		String baseName = lastVariableName.substring(0, index+1).trim();
+		for (int i = variableNames.length+1; i < dataValues.length; i++) {
+		    bindings.put(baseName + i, dataValues[i].trim());
+		}
+	    }
 	}
 	return null;
     }
