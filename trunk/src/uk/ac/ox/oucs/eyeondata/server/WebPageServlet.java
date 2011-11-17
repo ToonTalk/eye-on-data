@@ -315,11 +315,13 @@ public class WebPageServlet extends HttpServlet {
 	parts = ServerUtilities.removeEmptyLines(expression.split("/"));
 	if (parts.size() > 1) {
 	    numbers = evaluateAllToNumbers(parts, bindings, result, request);
-	    Double dividend = 1.0;
+	    Double dividend = null;
 	    for (Double number : numbers) {
 		if (number != null) {
 		    if (number == 0) {
 			result[0] += "Unable to divide by zero in " + expression;
+		    } else if (dividend == null) {
+			dividend = number;
 		    } else {
 			dividend /= number;
 		    }
