@@ -1,5 +1,6 @@
 <html>
 <body>
+<font style=font-family:verdana;">
 <h2>How to use DataPiXs</h2>
 <p>
 Simply create a web page that contains sections between three pluses: +++.
@@ -11,14 +12,16 @@ show different things depending upon some data.
 <a href="http://time-series.data.ox.ac.uk/?action=fetch&type=average&series=mpan:2000027360200,mpan:2000027360868,virtual:computing-services&startTime=1320105600&endTime=1321315200&format=csv">http://time-series.data.ox.ac.uk/?action=fetch&type=average&series=mpan:2000027360200,mpan:2000027360868,virtual:computing-services&startTime=1320105600&endTime=1321315200&format=csv</a>
 <p>fetches electric metre readings from some buildings in Oxford University.</p>
 <p>You use these URLs by giving names to the values of the data. For example</p>
-<pre>
-+++ oxford1, oxford2, oxford3 = http://time-series.data.ox.ac.uk/?action=fetch&type=average&series=mpan:2000027360200,mpan:2000027360868,virtual:computing-services&startTime=1320105600&endTime=1321315200&format=csv +++
-</pre><br>
+<p>
++++ oxford1, oxford2, oxford3 = 
+    http://time-series.data.ox.ac.uk/?action=fetch&type=average&series=mpan:2000027360200,mpan:2000027360868,virtual:computing-services&startTime=1320105600&endTime=1321315200&format=csv 
++++
+</p>
 The '+++' indicates the beginning and ends of <i>holes</i> where instructions to DataPixs is given.
 Names the first data from that URL <i>oxford1</i>, the second one <i>oxford2</i>, and so on. 
 The system automatically generates names for each data item. 
-<i>oxford616</i> is the 616<super>th</super> number from the data source (if there are that many).</p>
-You can use multiple sources.
+For example, <i>oxford616</i> is the 616<super>th</super> number from the data source (if there are that many).</p>
+You can use multiple URL data sources using different names for the values.
 <h3>Using data</h3>
 <p>You can put data into your page by using the data names as follows:</p>
 <p>
@@ -36,17 +39,18 @@ You can use brackets to group things together.
 <p>You can include images in the instructions to DataPiXs and then compute the <i>width</i> and <i>height</i> of the image. 
 For example</p>
 <p>
-The height of this +++ <img src="http://upload.wikimedia.org/wikipedia/commons/3/3e/Tree-256x256.png" _moz_resizing="true"> height = oxford9/2 width = 20 +++
+The height of this +++ <img src="http://upload.wikimedia.org/wikipedia/commons/3/3e/Tree-256x256.png"> height = oxford9/2 width = 20 +++
 is proportional to the value of the <i>oxford9</i> data element.</p>
 <h3>Conditional content</h3>
 <p>You can have text and images depend upon the value of data elements. For example,</p>
 <p>
-It is +++ if oxford1<oxford2 then bad that energy consumption is increasing else good that energy consumption is decreasing +++.
+It is +++ if oxford1&lt;oxford2 then bad that energy consumption is increasing else good that energy consumption is decreasing +++.
 </p>
 <h3>Continuing to improve your visualisation</h3>
 <p>You can share the visualisation URL with everyone. 
 When the page is loaded it will show the latest value of the data. 
 To improve your visualisation on another day you need to save the URL in the DataPiXs authoring tab.
 </p>
+</font>
 </body>
 </html>
