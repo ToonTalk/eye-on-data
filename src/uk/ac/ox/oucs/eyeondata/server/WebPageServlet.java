@@ -350,8 +350,7 @@ public class WebPageServlet extends HttpServlet {
 	    double number = Double.parseDouble(value);
 	    result[0] = doubleToString(number);
 	} catch (NumberFormatException e) {
-	    addError(" The following is neither a number nor the value of a variable: " + expression, result);
-	    result[0] = backgroundColor("yellow", "0");
+	    result[0] = value;
 	}
 	return result;
     }
