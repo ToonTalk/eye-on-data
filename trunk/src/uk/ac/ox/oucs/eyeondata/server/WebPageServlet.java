@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import uk.ac.ox.oucs.eyeondata.shared.Utilities;
 import uk.ac.ox.oucs.eyeondata.server.objectify.DAO;
 import uk.ac.ox.oucs.eyeondata.server.objectify.WebPage;
 
@@ -38,33 +39,45 @@ public class WebPageServlet extends HttpServlet {
               throws ServletException, java.io.IOException {
 	response.setContentType(HTML_CONTENT_TYPE);
 	PrintWriter writer = response.getWriter();
-	String pathInfo = request.getPathInfo();
-	pathInfo = pathInfo.substring(1); // strip off the initial /
-	int extensionStart = pathInfo.indexOf(".html");
-	if (extensionStart > 0) {
-	    String readOnlyPageId = pathInfo.substring(0, extensionStart);
-	    DAO dao = ServerUtilities.getDao();
-	    String pageId = dao.getPageId(readOnlyPageId);
-	    if (pageId == null) {
-		writer.print("<html><body><p>Could not find a web page with id: " + readOnlyPageId + "</p></body></html>");
-		return;
+	String rawHTML;
+	String templateURL = request.getParameter("url");
+	if (templateURL != null) {
+	    String[] urlContents = ServerUtilities.fetchURLContents( templateURL, request);
+	    if (urlContents[0] != null) {
+		rawHTML = urlContents[0];
+	    } else {
+		rawHTML = urlContents[1]; // the error message
 	    }
-	    WebPage webPage = dao.getWebPage(pageId);
-	    if (webPage == null) {
-		writer.print("<html><body><p>Id known but no web page found. id: " + readOnlyPageId + "</p></body></html>");
-		// TODO: add this to server logs
-		return;
-	    }
-	    String rawHTML = webPage.getHtml();
-	    String[] processedHTML = processHTML(rawHTML, request);
-	    String body = processedHTML[0];
-	    if (processedHTML[1] != null) {
-		body += "<br>Errors encountered. " + processedHTML[1];
-	    }
-	    writer.print("<html><body>" + body + "</p></body></html>");
 	} else {
-	    writer.print("<html><body><p>Unable to process. URL does not end with .html: " + pathInfo + "</p></body></html>");
+	    String pathInfo = request.getPathInfo();
+	    pathInfo = pathInfo.substring(1); // strip off the initial /
+	    int extensionStart = pathInfo.indexOf(".html");
+	    if (extensionStart > 0) {
+		String readOnlyPageId = pathInfo.substring(0, extensionStart);
+		DAO dao = ServerUtilities.getDao();
+		String pageId = dao.getPageId(readOnlyPageId);
+		if (pageId == null) {
+		    writer.print("<html><body><p>Could not find a web page with id: " + readOnlyPageId + "</p></body></html>");
+		    return;
+		}
+		WebPage webPage = dao.getWebPage(pageId);
+		if (webPage == null) {
+		    writer.print("<html><body><p>Id known but no web page found. id: " + readOnlyPageId + "</p></body></html>");
+		    // TODO: add this to server logs
+		    return;
+		}
+		rawHTML = webPage.getHtml();
+	    } else {
+		writer.print("<html><body><p>Unable to process. URL does not end with .html: " + pathInfo + "</p></body></html>");
+		return;
+	    }
 	}
+	String[] processedHTML = processHTML(rawHTML, request);
+	String body = processedHTML[0];
+	if (processedHTML[1] != null) {
+	    body += "<br>Errors encountered. " + processedHTML[1];
+	}
+	writer.print("<html><body>" + body + "</p></body></html>");
     }
 
     private String[] processHTML(String rawHTML, HttpServletRequest request) {
@@ -260,7 +273,7 @@ public class WebPageServlet extends HttpServlet {
 
     private String[] evaluate(String expression, HashMap<String, String> bindings, HttpServletRequest request) {
 	String result[] = new String[2];
-	if (ServerUtilities.isURL(expression)) {
+	if (Utilities.isURL(expression)) {
 	    String[] urlContents = ServerUtilities.fetchURLContents(expression, request);
 	    if (urlContents[0] != null) {
 		toCSV(urlContents[0], result);
@@ -325,8 +338,12 @@ public class WebPageServlet extends HttpServlet {
 		    } else {
 			dividend /= number;
 		    }
-		}			
-		result[0] = doubleToString(dividend);
+		}
+		if (dividend == null) {
+		    result[0] = "/";
+		} else {
+		    result[0] = doubleToString(dividend);
+		}
 	    }
 	    return result;
 	}
@@ -359,7 +376,7 @@ public class WebPageServlet extends HttpServlet {
 	return "<font style='background-color:" + color + ";'>" + text + "</font>";
     }
 
-    private String doubleToString(Double number) {
+    private String doubleToString(double number) {
 	decimalFormat.setMaximumFractionDigits(3);
 	return decimalFormat.format(number);
     }

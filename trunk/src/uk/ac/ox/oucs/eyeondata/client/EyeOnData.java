@@ -1,5 +1,7 @@
 package uk.ac.ox.oucs.eyeondata.client;
 
+import uk.ac.ox.oucs.eyeondata.shared.Utilities;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -46,20 +48,25 @@ public class EyeOnData implements EntryPoint {
      */
     public void onModuleLoad() {
 	instance = this;
-	VerticalPanel contents = new VerticalPanel();
-	contents.setSpacing(10);
-	RootPanel.get().add(contents);
-	HTML welcome = new HTML(strings.welcomeMessage());
-	contents.add(welcome);
-	final RichTextEntry richTextEntry = new RichTextEntry();
 	pageId = Location.getParameter("pageId");
 	if (pageId == null) {
 	    String url = Location.getHref();
 	    int hashIndex = url.indexOf('#');
 	    if (hashIndex >= 0) {
 		pageId = url.substring(hashIndex+1);
+		if (Utilities.isURL(pageId)) {
+		    String redirectionURL = GWT.getHostPageBaseURL()+ "v/?url=" + pageId;
+		    Location.replace(redirectionURL);
+		    return;
+		}
 	    }
 	}
+	VerticalPanel contents = new VerticalPanel();
+	contents.setSpacing(10);
+	RootPanel.get().add(contents);
+	HTML welcome = new HTML(strings.welcomeMessage());
+	contents.add(welcome);
+	final RichTextEntry richTextEntry = new RichTextEntry();
 	if (pageId != null) {
 	    fetchPreviousPageContents(richTextEntry);
 	}
@@ -73,13 +80,13 @@ public class EyeOnData implements EntryPoint {
 
 		    @Override
 		    public void onFailure(Throwable caught) {
-			Utilities.popupMessage(strings.serverErrorMessage());
+			ClientUtilities.popupMessage(strings.serverErrorMessage());
 		    }
 
 		    @Override
 		    public void onSuccess(String[] result) {
 			if (result[2] != null) {
-			    Utilities.popupMessage(result[1]);
+			    ClientUtilities.popupMessage(result[1]);
 			}
 			pageId = result[0];
 			if (result[1] != null) {
@@ -127,7 +134,7 @@ public class EyeOnData implements EntryPoint {
 
 	    @Override
 	    public void onFailure(Throwable caught) {
-		Utilities.popupMessage(strings.serverErrorMessage());
+		ClientUtilities.popupMessage(strings.serverErrorMessage());
 	    }
 
 	    @Override
@@ -140,7 +147,7 @@ public class EyeOnData implements EntryPoint {
 		    editAnotherTime.setHTML("");
 		}
 		if (result[2] != null) {
-		    Utilities.popupMessage(result[2]);
+		    ClientUtilities.popupMessage(result[2]);
 		}
 	    }
 	    
