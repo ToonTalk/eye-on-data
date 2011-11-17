@@ -12,7 +12,7 @@ import com.google.gwt.user.client.ui.HTML;
  * @author Ken Kahn
  *
  */
-public class Utilities {
+public class ClientUtilities {
     
     /**
      * Displays textOrHTML in a centered pop up with auto hide.

@@ -52,7 +52,7 @@ public class EyeOnDataServiceImpl extends RemoteServiceServlet implements
 	DAO dao = ServerUtilities.getDao();
 	WebPage webPage = dao.getWebPage(pageId);
 	if (webPage == null) {
-	    result[2] = "Unable to find the previous contents of a page with id: " + pageId;
+	    result[2] = "Unable to find the contents of a page with id: " + pageId;
 	} else {
 	    result[0] = webPage.getHtml();
 	    result[1] = dao.getReadOnlyPageId(pageId);

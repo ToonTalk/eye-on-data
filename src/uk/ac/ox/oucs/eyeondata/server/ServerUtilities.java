@@ -154,11 +154,6 @@ public class ServerUtilities {
 	return s.replaceAll(NON_BREAKING_SPACE_REGULAR_EXPRESSION, " ");
     }
 
-    public static boolean isURL(String expression) {
-	// could this be better
-	return expression.contains("://");
-    }
-    
     public static ArrayList<String> removeEmptyLines(String lines[]) {
 	ArrayList<String> result = new ArrayList<String>();
         for (int i = 0; i < lines.length; i++) {
