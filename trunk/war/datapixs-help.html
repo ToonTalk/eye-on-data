@@ -1,7 +1,7 @@
 <html>
 <body>
 <font style=font-family:verdana;">
-<h2>How to use DataPiXs</h2>
+<h2>How to use DataPixs</h2>
 <p>
 Simply create a web page that contains sections between three pluses: +++.
 Those sections can say where to get data from, what to do with the data,
@@ -31,25 +31,36 @@ The amount of electricity used in the first hour is enough to make +++ (oxford1+
 </p><br>
 <p>You can use '+', '-', '*' (multiplication), and '/' (division) to compute things. 
 You can use brackets to group things together. 
-(Without the parentheses oxford2+oxford3+oxford4/3 will add oxford2 and oxford3 and oxford4/3.)</p>
+(Without the parentheses oxford2+oxford3+oxford4/3 will add together <i>oxford2</i>, <i>oxford3</i>, and <i>oxford4</i>/3.)</p>
 
-<p>Try copying and pasting the data source and the example above into DataPiXs and click on <b>Save and create a live web page</b> to see what it does.</p>
+<p>Try copying and pasting the data source and the example above into DataPixs and click on <b>Save and create a live web page</b> to see what it does.</p>
 
 <h3>Stretching and shrinking images</h3>
-<p>You can include images in the instructions to DataPiXs and then compute the <i>width</i> and <i>height</i> of the image. 
+<p>You can include images in the instructions to DataPixs and then compute the <i>width</i> and <i>height</i> of the image. 
 For example</p>
 <p>
 The height of this +++ <img src="http://upload.wikimedia.org/wikipedia/commons/3/3e/Tree-256x256.png"> height = oxford9/2 width = 20 +++
 is proportional to the value of the <i>oxford9</i> data element.</p>
 <h3>Conditional content</h3>
-<p>You can have text and images depend upon the value of data elements. For example,</p>
+<p>You can have text and images depend upon the value of data elements. 
+To do this use <i>if</i> and <i>then</i> in the instruction. In between <i>if</i> and <i>then</i> you can use 
+&lt; (less than), &gt; (greater than), &lt;= (less than or equal), &gt;= (greater than or equal), = (equal), or != (not equal)
+to compare two values. If the expression is true then everything after the <i>then</i> will be included on your live page.
+You can also add <i>else</i> to your instruction and then if the expression is false everything after the <i>else</i> will be included.
+For example,</p>
 <p>
 It is +++ if oxford1&lt;oxford2 then bad that energy consumption is increasing else good that energy consumption is decreasing +++.
 </p>
 <h3>Continuing to improve your visualisation</h3>
 <p>You can share the visualisation URL with everyone. 
 When the page is loaded it will show the latest value of the data. 
-To improve your visualisation on another day you need to save the URL in the DataPiXs authoring tab.
+To improve your visualisation on another day you need to save the URL in the DataPixs authoring tab.
+</p>
+<h3>Using your own web pages as DataPixs visualisations</h3>
+<p>If you have created a web page with DataPixs instructions elsewhere you can turn it into a live visualisation by entering http::/datapixs.appspot.com/#" followed by your URL.
+For example 
+<a href="http::/datapixs.appspot.com/#https://sites.google.com/site/datapixsproject/examples/testing-all-features" target="_blank">http::/datapixs.appspot.com/#https://sites.google.com/site/datapixsproject/examples/testing-all-features</a>
+is a live version of this help page.
 </p>
 </font>
 </body>
